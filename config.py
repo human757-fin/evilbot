@@ -1,0 +1,14 @@
+SPAM_LIMIT = 5
+SPAM_SECONDS = 7
+MAX_MENTIONS = 5
+TIMEOUT_MINUTES = 10
+
+DEFAULT_WELCOME_COLOR = "FF0000"
+
+BANNED_WORDS = [
+    "nigger",
+    "faggot",
+    "kys",
+    "porn",
+    "discord.gg/"
+]
