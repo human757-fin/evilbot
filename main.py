@@ -230,6 +230,13 @@ If something feels like it might break the rules, it probably does.
             await message.channel.send(
                 "Failed to connect to voice channel."
             )
+    if message.content.startswith("$leavevc"):
+        if not message.author.guild_permissions.administrator:
+            return
+
+        if message.guild.voice_client:
+            await message.guild.voice_client.disconnect()
+            await message.channel.send("Disconnected ✅")
 
     if is_staff(message.author):
         return
