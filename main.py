@@ -5,7 +5,7 @@ import os
 from datetime import timedelta
 from dotenv import load_dotenv
 import asyncio
-from TikTokApi import TikTokApi
+import feedparser
 
 from config import (
     SPAM_LIMIT,
@@ -26,7 +26,7 @@ TIKTOK_USERNAME = os.getenv("TIKTOK_USERNAME")
 TIKTOK_CHANNEL_ID = int(os.getenv("TIKTOK_CHANNEL_ID"))
 UPLOAD_PING_ROLE_ID = int(os.getenv("UPLOAD_PING_ROLE_ID"))
 
-LAST_TIKTOK_FILE = "last_tiktok.txt"
+LAST_VIDEO_FILE = "last_tiktok.txt"
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -53,17 +53,16 @@ def save_settings(data):
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
-def get_last_video():
-    if not os.path.exists(LAST_TIKTOK_FILE):
-        return None
+def load_last_video():
+    if os.path.exists(LAST_VIDEO_FILE):
+        with open(LAST_VIDEO_FILE, "r", encoding="utf-8") as f:
+            return f.read().strip()
+    return None
 
-    with open(LAST_TIKTOK_FILE, "r") as f:
-        return f.read().strip()
 
-
-def set_last_video(video_id):
-    with open(LAST_TIKTOK_FILE, "w") as f:
-        f.write(str(video_id))
+def save_last_video(video_url):
+    with open(LAST_VIDEO_FILE, "w", encoding="utf-8") as f:
+        f.write(video_url)
 
 def write_channels():
     channels = []
@@ -198,64 +197,39 @@ async def process_queue():
                 view=view
             )
 
-async def tiktok_watcher():
+async def check_tiktok_uploads():
     await client.wait_until_ready()
 
     while not client.is_closed():
         try:
-            async with TikTokApi() as api:
-                user = api.user(
-                    username=TIKTOK_USERNAME
-                )
+            url = f"https://rsshub.app/tiktok/user/{TIKTOK_USERNAME}"
+            feed = feedparser.parse(url)
 
-                videos = user.videos(count=1)
-                latest = None
+            if feed.entries:
+                latest = feed.entries[0]
+                video_url = latest.link
 
-                async for video in videos:
-                    latest = video
-                    break
+                last_video = load_last_video()
 
-                if latest:
-                    video_id = latest.id
-                    last_id = get_last_video()
+                # First run: save without posting
+                if last_video is None:
+                    save_last_video(video_url)
 
-                    if str(video_id) != str(last_id):
-                        set_last_video(video_id)
+                elif video_url != last_video:
+                    save_last_video(video_url)
 
-                        channel = client.get_channel(
-                            TIKTOK_CHANNEL_ID
+                    channel = client.get_channel(UPLOAD_CHANNEL_ID)
+
+                    if channel:
+                        role_ping = f"<@&{UPLOAD_ROLE_ID}>"
+
+                        embed = discord.Embed(
+                            title="New TikTok Upload",
+                            description=f"{role_ping}\n{video_url}",
+                            color=0xFE2C55
                         )
 
-                        if channel:
-                            role_ping = (
-                                f"<@&{UPLOAD_PING_ROLE_ID}>"
-                            )
-
-                            url = (
-                                f"https://www.tiktok.com/@"
-                                f"{TIKTOK_USERNAME}/video/"
-                                f"{video_id}"
-                            )
-
-                            embed = discord.Embed(
-                                title="New TikTok Upload 🎵",
-                                description=(
-                                    f"New upload from "
-                                    f"@{TIKTOK_USERNAME}"
-                                ),
-                                color=0xFF0050
-                            )
-
-                            embed.add_field(
-                                name="Link",
-                                value=url,
-                                inline=False
-                            )
-
-                            await channel.send(
-                                content=role_ping,
-                                embed=embed
-                            )
+                        await channel.send(embed=embed)
 
         except Exception as e:
             print("TikTok watcher error:", e)
@@ -364,7 +338,7 @@ async def on_ready():
         background_loop()
     )
     client.loop.create_task(
-        tiktok_watcher()
+        check_tiktok_uploads()
     )
 
 
