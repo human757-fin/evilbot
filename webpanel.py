@@ -14,17 +14,16 @@ from werkzeug.security import (
 from dotenv import load_dotenv
 import pymysql
 import os
-import asyncio
 
 from permissions import (
     login_required,
     admin_required
 )
 from bot_api import (
-    join_vc_async,
-    leave_vc_async,
-    play_sound_async,
-    send_embed_async,
+    join_vc,
+    leave_vc,
+    play_sound,
+    send_embed,
     get_status
 )
 
@@ -172,7 +171,7 @@ def route_join_vc():
     channel_id = int(
         request.form["channel_id"]
     )
-    asyncio.run(join_vc_async(channel_id))
+    join_vc(channel_id)
 
     flash("Join VC command sent.")
     return redirect(
@@ -183,7 +182,7 @@ def route_join_vc():
 @app.route("/leave_vc", methods=["POST"])
 @login_required
 def route_leave_vc():
-    asyncio.run(leave_vc_async())
+    leave_vc()
 
     flash("Leave VC command sent.")
     return redirect(
@@ -239,7 +238,7 @@ def route_play():
         "filename"
     ]
 
-    asyncio.run(play_sound_async(filename))
+    play_sound(filename)
 
     flash(f"Playing {filename}")
     return redirect(
@@ -267,16 +266,14 @@ def delete_sound(filename):
 @login_required
 def embed_page():
     if request.method == "POST":
-        asyncio.run(
-            send_embed_async(
-                request.form["channel_id"],
-                request.form["title"],
-                request.form["description"],
-                request.form.get("color"),
-                request.form.get("image_url"),
-                request.form.get("button_label"),
-                request.form.get("button_url")
-            )
+        send_embed(
+            request.form["channel_id"],
+            request.form["title"],
+            request.form["description"],
+            request.form.get("color"),
+            request.form.get("image_url"),
+            request.form.get("button_label"),
+            request.form.get("button_url")
         )
 
         flash("Embed sent.")

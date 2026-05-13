@@ -49,6 +49,132 @@ def save_settings(data):
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
+async def process_queue():
+    queue_file = "bot_queue.json"
+
+    if not os.path.exists(queue_file):
+        return
+
+    with open(
+        queue_file,
+        "r",
+        encoding="utf-8"
+    ) as f:
+        try:
+            commands = json.load(f)
+        except:
+            commands = []
+
+    open(queue_file, "w").write("[]")
+
+    for cmd in commands:
+        action = cmd.get("action")
+
+        if action == "join_vc":
+            channel = client.get_channel(
+                int(cmd["channel_id"])
+            )
+
+            if channel:
+                await channel.connect()
+
+        elif action == "leave_vc":
+            for vc in client.voice_clients:
+                await vc.disconnect()
+
+        elif action == "play_sound":
+            if client.voice_clients:
+                vc = client.voice_clients[0]
+
+                filepath = os.path.join(
+                    "sounds",
+                    cmd["filename"]
+                )
+
+                if vc.is_playing():
+                    vc.stop()
+
+                vc.play(
+                    discord.FFmpegPCMAudio(
+                        filepath
+                    )
+                )
+
+        elif action == "send_embed":
+            channel = client.get_channel(
+                int(cmd["channel_id"])
+            )
+
+            if not channel:
+                continue
+
+            color = 0x5865F2
+
+            if cmd.get("color"):
+                color = int(
+                    cmd["color"].replace("#", ""),
+                    16
+                )
+
+            embed = discord.Embed(
+                title=cmd["title"],
+                description=cmd[
+                    "description"
+                ],
+                color=color
+            )
+
+            if cmd.get("image_url"):
+                embed.set_image(
+                    url=cmd["image_url"]
+                )
+
+            view = None
+
+            if (
+                cmd.get("button_label")
+                and cmd.get("button_url")
+            ):
+                view = discord.ui.View()
+                view.add_item(
+                    discord.ui.Button(
+                        label=cmd[
+                            "button_label"
+                        ],
+                        url=cmd[
+                            "button_url"
+                        ]
+                    )
+                )
+
+            await channel.send(
+                embed=embed,
+                view=view
+            )
+
+def write_status():
+    with open(
+        "bot_status.json",
+        "w",
+        encoding="utf-8"
+    ) as f:
+        json.dump({
+            "online": client.is_ready(),
+            "guilds": len(client.guilds),
+            "voice_connected":
+                len(client.voice_clients) > 0
+        }, f)
+
+async def background_loop():
+    await client.wait_until_ready()
+
+    while not client.is_closed():
+        await process_queue()
+        write_status()
+        await discord.utils.sleep_until(
+            discord.utils.utcnow()
+            + timedelta(seconds=2)
+        )
 
 class LinkButtons(discord.ui.View):
     def __init__(self, buttons):
@@ -113,6 +239,10 @@ async def on_ready():
     synced = await tree.sync(guild=guild)
     print(f"Synced {len(synced)} commands")
     print(f"Logged in as {client.user}")
+    write_status()
+    client.loop.create_task(
+        background_loop()
+    )
 
 
 @client.event

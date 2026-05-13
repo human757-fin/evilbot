@@ -1,50 +1,54 @@
-import discord
+import json
 import os
 
-client = None
+QUEUE_FILE = "bot_queue.json"
 
 
-def set_client(bot_client):
-    global client
-    client = bot_client
+def push_command(data):
+    commands = []
+
+    if os.path.exists(QUEUE_FILE):
+        with open(
+            QUEUE_FILE,
+            "r",
+            encoding="utf-8"
+        ) as f:
+            try:
+                commands = json.load(f)
+            except:
+                commands = []
+
+    commands.append(data)
+
+    with open(
+        QUEUE_FILE,
+        "w",
+        encoding="utf-8"
+    ) as f:
+        json.dump(commands, f, indent=4)
 
 
-async def join_vc_async(channel_id):
-    channel = client.get_channel(int(channel_id))
-
-    if not channel:
-        return False
-
-    await channel.connect()
-    return True
+def join_vc(channel_id):
+    push_command({
+        "action": "join_vc",
+        "channel_id": channel_id
+    })
 
 
-async def leave_vc_async():
-    for vc in client.voice_clients:
-        await vc.disconnect()
-    return True
+def leave_vc():
+    push_command({
+        "action": "leave_vc"
+    })
 
 
-async def play_sound_async(filename):
-    if not client.voice_clients:
-        return False
-
-    vc = client.voice_clients[0]
-
-    filepath = os.path.join(
-        "sounds",
-        filename
-    )
-
-    if vc.is_playing():
-        vc.stop()
-
-    source = discord.FFmpegPCMAudio(filepath)
-    vc.play(source)
-    return True
+def play_sound(filename):
+    push_command({
+        "action": "play_sound",
+        "filename": filename
+    })
 
 
-async def send_embed_async(
+def send_embed(
     channel_id,
     title,
     description,
@@ -53,58 +57,31 @@ async def send_embed_async(
     button_label=None,
     button_url=None
 ):
-    channel = client.get_channel(
-        int(channel_id)
-    )
-
-    if not channel:
-        return False
-
-    embed_color = 0x5865F2
-
-    if color:
-        color = color.replace("#", "")
-        embed_color = int(color, 16)
-
-    embed = discord.Embed(
-        title=title,
-        description=description,
-        color=embed_color
-    )
-
-    if image_url:
-        embed.set_image(url=image_url)
-
-    view = None
-
-    if button_label and button_url:
-        view = discord.ui.View()
-        view.add_item(
-            discord.ui.Button(
-                label=button_label,
-                url=button_url
-            )
-        )
-
-    await channel.send(
-        embed=embed,
-        view=view
-    )
-    return True
+    push_command({
+        "action": "send_embed",
+        "channel_id": channel_id,
+        "title": title,
+        "description": description,
+        "color": color,
+        "image_url": image_url,
+        "button_label": button_label,
+        "button_url": button_url
+    })
 
 
 def get_status():
-    if not client:
+    status_file = "bot_status.json"
+
+    if not os.path.exists(status_file):
         return {
             "online": False,
             "guilds": 0,
             "voice_connected": False
         }
 
-    return {
-        "online": client.is_ready(),
-        "guilds": len(client.guilds),
-        "voice_connected": len(
-            client.voice_clients
-        ) > 0
-    }
+    with open(
+        status_file,
+        "r",
+        encoding="utf-8"
+    ) as f:
+        return json.load(f)
