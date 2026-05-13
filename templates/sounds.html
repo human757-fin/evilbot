@@ -1,0 +1,14 @@
+<h1>Sounds</h1>
+
+<form method="post" enctype="multipart/form-data">
+    <input type="file" name="file">
+    <button>Upload</button>
+</form>
+
+{% for file in files %}
+<form method="post" action="/play">
+    <input type="hidden" name="filename" value="{{ file }}">
+    {{ file }}
+    <button>Play</button>
+</form>
+{% endfor %}

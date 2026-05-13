@@ -1,0 +1,20 @@
+<h1>Users</h1>
+
+<form method="post">
+    <input name="username" placeholder="Username">
+    <input name="password" placeholder="Password">
+
+    Admin <input type="checkbox" name="is_admin"><br>
+    Upload <input type="checkbox" name="can_upload"><br>
+    Embed <input type="checkbox" name="can_embed"><br>
+    VC <input type="checkbox" name="can_vc"><br>
+    Sound <input type="checkbox" name="can_sound"><br>
+
+    <button>Create User</button>
+</form>
+
+<hr>
+
+{% for user in users %}
+<p>{{ user["username"] }}</p>
+{% endfor %}
