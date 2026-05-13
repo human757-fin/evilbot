@@ -4,6 +4,8 @@ import json
 import os
 from datetime import timedelta
 from dotenv import load_dotenv
+import asyncio
+from bot_api import set_client
 
 from config import (
     SPAM_LIMIT,
@@ -26,6 +28,8 @@ intents.members = True
 
 client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
+
+set_client(client)
 
 guild = discord.Object(id=GUILD_ID)
 
