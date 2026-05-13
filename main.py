@@ -218,10 +218,10 @@ async def check_tiktok_uploads():
                 elif video_url != last_video:
                     save_last_video(video_url)
 
-                    channel = client.get_channel(UPLOAD_CHANNEL_ID)
+                    channel = client.get_channel(TIKTOK_CHANNEL_ID)
 
                     if channel:
-                        role_ping = f"<@&{UPLOAD_ROLE_ID}>"
+                        role_ping = f"<@&{UPLOAD_PING_ROLE_ID}>"
 
                         embed = discord.Embed(
                             title="New TikTok Upload",
