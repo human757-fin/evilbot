@@ -238,6 +238,48 @@ If something feels like it might break the rules, it probably does.
             await message.guild.voice_client.disconnect()
             await message.channel.send("Disconnected ✅")
 
+    if message.content.startswith("$play"):
+        if not message.author.guild_permissions.administrator:
+            await message.channel.send(
+                "Admin only command."
+            )
+            return
+
+        parts = message.content.split(maxsplit=1)
+
+        if len(parts) < 2:
+            await message.channel.send(
+                "Usage: $play <filename>"
+            )
+            return
+
+        filename = parts[1]
+        filepath = f"/home/container/bot/sounds/{filename}"
+
+        if not os.path.isfile(filepath):
+            await message.channel.send(
+                f"File not found: {filename}"
+            )
+            return
+
+        vc = message.guild.voice_client
+
+        if not vc:
+            await message.channel.send(
+                "Bot is not in a voice channel."
+            )
+            return
+
+        if vc.is_playing():
+            vc.stop()
+
+        source = discord.FFmpegPCMAudio(filepath)
+        vc.play(source)
+
+        await message.channel.send(
+            f"Playing **{filename}** ▶️"
+        )
+
     if is_staff(message.author):
         return
 
