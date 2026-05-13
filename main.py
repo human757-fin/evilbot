@@ -173,6 +173,13 @@ async def process_queue():
             )
 
 def write_status():
+    voice_channel = None
+
+    if client.voice_clients:
+        vc = client.voice_clients[0]
+        if vc.channel:
+            voice_channel = vc.channel.name
+
     with open(
         "bot_status.json",
         "w",
@@ -182,7 +189,8 @@ def write_status():
             "online": client.is_ready(),
             "guilds": len(client.guilds),
             "voice_connected":
-                len(client.voice_clients) > 0
+                len(client.voice_clients) > 0,
+            "voice_channel": voice_channel
         }, f)
 
 async def background_loop():

@@ -14,9 +14,10 @@
     </p>
 
     <p>Guilds: {{ status.guilds }}</p>
-    <p>Voice Connected:
+    <p>
+        Voice Connected:
         {% if status.voice_connected %}
-            🎵 Yes
+            🎵 {{ status.voice_channel }}
         {% else %}
             No
         {% endif %}

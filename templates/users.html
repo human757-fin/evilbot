@@ -9,11 +9,47 @@
     <input name="username" placeholder="Username">
     <input name="password" placeholder="Password">
 
-    <label><input type="checkbox" name="is_admin"> Admin</label>
-    <label><input type="checkbox" name="can_upload"> Upload</label>
-    <label><input type="checkbox" name="can_embed"> Embed</label>
-    <label><input type="checkbox" name="can_vc"> VC</label>
-    <label><input type="checkbox" name="can_sound"> Sound</label>
+    <div class="perm-grid">
+        <label class="switch-row">
+            Admin
+            <label class="switch">
+                <input type="checkbox" name="is_admin">
+                <span class="slider"></span>
+            </label>
+        </label>
+
+        <label class="switch-row">
+            Upload Files
+            <label class="switch">
+                <input type="checkbox" name="can_upload">
+                <span class="slider"></span>
+            </label>
+        </label>
+
+        <label class="switch-row">
+            Send Embeds
+            <label class="switch">
+                <input type="checkbox" name="can_embed">
+                <span class="slider"></span>
+            </label>
+        </label>
+
+        <label class="switch-row">
+            Join VC
+            <label class="switch">
+                <input type="checkbox" name="can_vc">
+                <span class="slider"></span>
+            </label>
+        </label>
+
+        <label class="switch-row">
+            Play Sounds
+            <label class="switch">
+                <input type="checkbox" name="can_sound">
+                <span class="slider"></span>
+            </label>
+        </label>
+    </div>
 
     <button>Create User</button>
 </form>

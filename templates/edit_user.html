@@ -8,35 +8,52 @@
 <form method="post">
     <input name="password" placeholder="New password (optional)">
 
-    <label>
-        <input type="checkbox" name="is_admin"
-        {% if user["is_admin"] %}checked{% endif %}>
-        Admin
-    </label><br>
+    <div class="perm-grid">
+        <label class="switch-row">
+            Admin
+            <label class="switch">
+                <input type="checkbox" name="is_admin"
+                {% if user["is_admin"] %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+        </label>
 
-    <label>
-        <input type="checkbox" name="can_upload"
-        {% if user["can_upload"] %}checked{% endif %}>
-        Upload
-    </label><br>
+        <label class="switch-row">
+            Upload Files
+            <label class="switch">
+                <input type="checkbox" name="can_upload"
+                {% if user["can_upload"] %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+        </label>
 
-    <label>
-        <input type="checkbox" name="can_embed"
-        {% if user["can_embed"] %}checked{% endif %}>
-        Embed
-    </label><br>
+        <label class="switch-row">
+            Send Embeds
+            <label class="switch">
+                <input type="checkbox" name="can_embed"
+                {% if user["can_embed"] %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+        </label>
 
-    <label>
-        <input type="checkbox" name="can_vc"
-        {% if user["can_vc"] %}checked{% endif %}>
-        VC
-    </label><br>
+        <label class="switch-row">
+            Join VC
+            <label class="switch">
+                <input type="checkbox" name="can_vc"
+                {% if user["can_vc"] %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+        </label>
 
-    <label>
-        <input type="checkbox" name="can_sound"
-        {% if user["can_sound"] %}checked{% endif %}>
-        Sound
-    </label><br>
+        <label class="switch-row">
+            Play Sounds
+            <label class="switch">
+                <input type="checkbox" name="can_sound"
+                {% if user["can_sound"] %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
+        </label>
+    </div>
 
     <button>Save</button>
 </form>
