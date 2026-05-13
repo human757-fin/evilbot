@@ -1,14 +1,37 @@
 {% extends "base.html" %}
-
-{% block title %}Embed{% endblock %}
-
+{%block title%}Embed{%endblock%}
 {% block content %}
 <h1>Send Embed</h1>
 
 <form method="post">
     <input name="channel_id" placeholder="Channel ID"><br>
     <input name="title" placeholder="Title"><br>
-    <textarea name="description"></textarea><br>
-    <button>Send</button>
+
+    <textarea
+        name="description"
+        placeholder="Description"
+    ></textarea><br>
+
+    <input
+        name="color"
+        placeholder="Hex color (#5865F2)"
+    ><br>
+
+    <input
+        name="image_url"
+        placeholder="Image URL"
+    ><br>
+
+    <input
+        name="button_label"
+        placeholder="Button Label"
+    ><br>
+
+    <input
+        name="button_url"
+        placeholder="Button URL"
+    ><br>
+
+    <button>Send Embed</button>
 </form>
 {% endblock %}

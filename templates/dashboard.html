@@ -1,9 +1,27 @@
 {% extends "base.html" %}
-
-{% block title %}Dashboard{% endblock %}
-
+{%block title%}Dashboard{%endblock%}
 {% block content %}
 <h1>Dashboard</h1>
+
+<div class="card">
+    <h2>Bot Status</h2>
+    <p>Online:
+        {% if status.online %}
+            ✅
+        {% else %}
+            ❌
+        {% endif %}
+    </p>
+
+    <p>Guilds: {{ status.guilds }}</p>
+    <p>Voice Connected:
+        {% if status.voice_connected %}
+            🎵 Yes
+        {% else %}
+            No
+        {% endif %}
+    </p>
+</div>
 
 <form method="post" action="/join_vc">
     <input name="channel_id" placeholder="Voice Channel ID">

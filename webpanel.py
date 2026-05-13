@@ -23,7 +23,8 @@ from bot_api import (
     join_vc,
     leave_vc,
     play_sound,
-    send_embed
+    send_embed,
+    get_status
 )
 
 load_dotenv()
@@ -156,8 +157,10 @@ def logout():
 @app.route("/dashboard")
 @login_required
 def dashboard():
+    status = get_status()
     return render_template(
-        "dashboard.html"
+        "dashboard.html",
+        status=status
     )
 
 
@@ -243,35 +246,39 @@ def route_play():
     )
 
 
+@app.route("/delete_sound/<filename>", methods=["POST"])
+@login_required
+def delete_sound(filename):
+    path = os.path.join(
+        UPLOAD_FOLDER,
+        filename
+    )
+
+    if os.path.exists(path):
+        os.remove(path)
+        flash("Deleted sound.")
+
+    return redirect(url_for("sounds"))
+
+
 # ---------------- EMBEDS ----------------
-@app.route(
-    "/embed",
-    methods=["GET", "POST"]
-)
+@app.route("/embed", methods=["GET", "POST"])
 @login_required
 def embed_page():
     if request.method == "POST":
-        channel_id = request.form[
-            "channel_id"
-        ]
-        title = request.form[
-            "title"
-        ]
-        description = request.form[
-            "description"
-        ]
-
         send_embed(
-            channel_id,
-            title,
-            description
+            request.form["channel_id"],
+            request.form["title"],
+            request.form["description"],
+            request.form.get("color"),
+            request.form.get("image_url"),
+            request.form.get("button_label"),
+            request.form.get("button_url")
         )
 
         flash("Embed sent.")
 
-    return render_template(
-        "embeds.html"
-    )
+    return render_template("embeds.html")
 
 
 # ---------------- USER ADMIN ----------------

@@ -64,3 +64,14 @@ button:hover {
     border-radius: 8px;
     margin-bottom: 20px;
 }
+
+textarea {
+    width: 400px;
+    height: 150px;
+    background: #1f2937;
+    color: white;
+}
+
+h1, h2 {
+    margin-top: 0;
+}
