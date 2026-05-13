@@ -4,7 +4,15 @@
 <h1>Send Embed</h1>
 
 <form method="post">
-    <input name="channel_id" placeholder="Channel ID"><br>
+    <select name="channel_id">
+        {% for channel in channels %}
+            {% if "#" in channel.name %}
+            <option value="{{ channel.id }}">
+                {{ channel.name }}
+            </option>
+            {% endif %}
+        {% endfor %}
+    </select><br>
     <input name="title" placeholder="Title"><br>
 
     <textarea

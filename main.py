@@ -46,6 +46,29 @@ def save_settings(data):
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
+def write_channels():
+    channels = []
+
+    for guild in client.guilds:
+        for channel in guild.text_channels:
+            channels.append({
+                "id": channel.id,
+                "name": f"#{channel.name}"
+            })
+
+        for channel in guild.voice_channels:
+            channels.append({
+                "id": channel.id,
+                "name": f"🔊 {channel.name}"
+            })
+
+    with open(
+        "channels.json",
+        "w",
+        encoding="utf-8"
+    ) as f:
+        json.dump(channels, f, indent=4)
+
 async def process_queue():
     queue_file = "bot_queue.json"
 
@@ -168,6 +191,7 @@ async def background_loop():
     while not client.is_closed():
         await process_queue()
         write_status()
+        write_channels()
         await discord.utils.sleep_until(
             discord.utils.utcnow()
             + timedelta(seconds=2)
@@ -237,6 +261,7 @@ async def on_ready():
     print(f"Synced {len(synced)} commands")
     print(f"Logged in as {client.user}")
     write_status()
+    write_channels()
     client.loop.create_task(
         background_loop()
     )

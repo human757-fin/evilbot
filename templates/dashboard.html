@@ -24,7 +24,16 @@
 </div>
 
 <form method="post" action="/join_vc">
-    <input name="channel_id" placeholder="Voice Channel ID">
+    <select name="channel_id">
+        {% for channel in channels %}
+            {% if "🔊" in channel.name %}
+            <option value="{{ channel.id }}">
+                {{ channel.name }}
+            </option>
+            {% endif %}
+        {% endfor %}
+    </select>
+
     <button>Join VC</button>
 </form>
 

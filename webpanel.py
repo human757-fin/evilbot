@@ -14,6 +14,7 @@ from werkzeug.security import (
 from dotenv import load_dotenv
 import pymysql
 import os
+import json
 
 from permissions import (
     login_required,
@@ -38,6 +39,16 @@ app.secret_key = os.getenv(
 UPLOAD_FOLDER = "sounds"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+def get_channels():
+    if not os.path.exists("channels.json"):
+        return []
+
+    with open(
+        "channels.json",
+        "r",
+        encoding="utf-8"
+    ) as f:
+        return json.load(f)
 
 # ---------------- DATABASE ----------------
 def db():
@@ -158,9 +169,12 @@ def logout():
 @login_required
 def dashboard():
     status = get_status()
+    channels = get_channels()
+
     return render_template(
         "dashboard.html",
-        status=status
+        status=status,
+        channels=channels
     )
 
 
@@ -265,6 +279,8 @@ def delete_sound(filename):
 @app.route("/embed", methods=["GET", "POST"])
 @login_required
 def embed_page():
+    channels = get_channels()
+
     if request.method == "POST":
         send_embed(
             request.form["channel_id"],
@@ -275,10 +291,12 @@ def embed_page():
             request.form.get("button_label"),
             request.form.get("button_url")
         )
-
         flash("Embed sent.")
 
-    return render_template("embeds.html")
+    return render_template(
+        "embeds.html",
+        channels=channels
+    )
 
 
 # ---------------- USER ADMIN ----------------
