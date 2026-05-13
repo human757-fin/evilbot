@@ -24,6 +24,7 @@ from bot_api import (
     join_vc,
     leave_vc,
     play_sound,
+    stop_sound,
     send_embed,
     get_status
 )
@@ -258,6 +259,14 @@ def route_play():
     return redirect(
         url_for("sounds")
     )
+
+
+@app.route("/stop_sound", methods=["POST"])
+@login_required
+def route_stop_sound():
+    stop_sound()
+    flash("Stopped sound.")
+    return redirect(url_for("sounds"))
 
 
 @app.route("/delete_sound/<filename>", methods=["POST"])

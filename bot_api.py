@@ -48,6 +48,12 @@ def play_sound(filename):
     })
 
 
+def stop_sound():
+    push_command({
+        "action": "stop_sound"
+    })
+
+
 def send_embed(
     channel_id,
     title,

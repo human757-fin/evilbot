@@ -120,6 +120,13 @@ async def process_queue():
                     )
                 )
 
+        elif action == "stop_sound":
+            if client.voice_clients:
+                vc = client.voice_clients[0]
+
+                if vc.is_playing():
+                    vc.stop()
+
         elif action == "send_embed":
             channel = client.get_channel(
                 int(cmd["channel_id"])

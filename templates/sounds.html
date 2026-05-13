@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 
-{% block title %}Sounds{% endblock %}
 {% block content %}
 <h1>Sounds</h1>
 
@@ -13,21 +12,39 @@
     <button>Upload</button>
 </form>
 
-{% for file in files %}
-<div class="sound-actions">
-    <form method="post" action="/play">
-        <input type="hidden"
-               name="filename"
-               value="{{ file }}">
-        <button class="play-btn">Play</button>
-    </form>
+<form method="post" action="/stop_sound">
+    <button class="stop-btn">
+        Stop Current Sound
+    </button>
+</form>
 
-    <form method="post"
-          action="/delete_sound/{{ file }}">
-        <button class="delete-btn">
-            Delete
-        </button>
-    </form>
+<hr>
+
+{% for file in files %}
+<div class="card">
+    <div class="filename">
+        {{ file }}
+    </div>
+
+    <div class="sound-actions">
+        <form method="post" action="/play">
+            <input
+                type="hidden"
+                name="filename"
+                value="{{ file }}"
+            >
+            <button class="play-btn">
+                Play
+            </button>
+        </form>
+
+        <form method="post"
+              action="/delete_sound/{{ file }}">
+            <button class="delete-btn">
+                Delete
+            </button>
+        </form>
+    </div>
 </div>
 {% endfor %}
 {% endblock %}
