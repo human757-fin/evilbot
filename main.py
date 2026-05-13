@@ -177,6 +177,60 @@ If something feels like it might break the rules, it probably does.
             f"Rules posted in {channel.mention} ✅"
         )
 
+    if message.content.startswith("$joinvc"):
+        if not message.author.guild_permissions.administrator:
+            await message.channel.send(
+                "Admin only command."
+            )
+            return
+
+        parts = message.content.split()
+
+        if len(parts) < 2:
+            await message.channel.send(
+                "Usage: $joinvc <voice_channel_id>"
+            )
+            return
+
+        try:
+            channel_id = int(parts[1])
+        except ValueError:
+            await message.channel.send(
+                "Voice channel ID must be numeric."
+            )
+            return
+
+        channel = client.get_channel(channel_id)
+
+        if not channel:
+            await message.channel.send(
+                "Couldn't find that voice channel."
+            )
+            return
+
+        if not isinstance(channel, discord.VoiceChannel):
+            await message.channel.send(
+                "That ID is not a voice channel."
+            )
+            return
+
+        try:
+            if message.guild.voice_client:
+                await message.guild.voice_client.move_to(channel)
+                await message.channel.send(
+                    f"Moved to **{channel.name}** ✅"
+                )
+            else:
+                await channel.connect()
+                await message.channel.send(
+                    f"Joined **{channel.name}** ✅"
+                )
+
+        except discord.ClientException:
+            await message.channel.send(
+                "Failed to connect to voice channel."
+            )
+
     if is_staff(message.author):
         return
 
