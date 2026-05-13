@@ -330,6 +330,57 @@ def users():
         users=users
     )
 
+@app.route("/edit_user/<int:user_id>", methods=["GET", "POST"])
+@admin_required
+def edit_user(user_id):
+    conn = db()
+
+    with conn.cursor() as cursor:
+        if request.method == "POST":
+            password = request.form["password"]
+
+            query = """
+            UPDATE users
+            SET is_admin=%s,
+                can_upload=%s,
+                can_embed=%s,
+                can_vc=%s,
+                can_sound=%s
+            """
+
+            values = [
+                "is_admin" in request.form,
+                "can_upload" in request.form,
+                "can_embed" in request.form,
+                "can_vc" in request.form,
+                "can_sound" in request.form
+            ]
+
+            if password:
+                query += ", password=%s"
+                values.append(
+                    generate_password_hash(password)
+                )
+
+            query += " WHERE id=%s"
+            values.append(user_id)
+
+            cursor.execute(query, tuple(values))
+            flash("User updated.")
+
+        cursor.execute(
+            "SELECT * FROM users WHERE id=%s",
+            (user_id,)
+        )
+        user = cursor.fetchone()
+
+    conn.close()
+
+    return render_template(
+        "edit_user.html",
+        user=user
+    )
+
 
 if __name__ == "__main__":
     app.run(

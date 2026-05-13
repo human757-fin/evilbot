@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bot Panel{% endblock %}</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/dashboard">Dashboard</a>
+            <a href="/sounds">Sounds</a>
+            <a href="/embed">Embeds</a>
+
+            {% if session.get("is_admin") %}
+            <a href="/users">Users</a>
+            {% endif %}
+        </div>
+
+        <div class="nav-right">
+            {% if session.get("user") %}
+                <span>{{ session["user"] }}</span>
+                <a href="/logout">Logout</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <main class="container">
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

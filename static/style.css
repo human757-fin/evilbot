@@ -1,0 +1,66 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #111827;
+    color: white;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    background: #1f2937;
+    border-bottom: 1px solid #374151;
+}
+
+.navbar a {
+    color: white;
+    text-decoration: none;
+    margin-right: 15px;
+}
+
+.navbar a:hover {
+    color: #60a5fa;
+}
+
+.container {
+    padding: 30px;
+}
+
+input, textarea, button {
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 8px;
+    border: none;
+}
+
+input, textarea {
+    width: 320px;
+    background: #1f2937;
+    color: white;
+}
+
+button {
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #1d4ed8;
+}
+
+.card {
+    background: #1f2937;
+    padding: 15px;
+    border-radius: 10px;
+    margin: 10px 0;
+}
+
+.flash {
+    background: #2563eb;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
