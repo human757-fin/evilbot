@@ -236,6 +236,33 @@ async def check_tiktok_uploads():
 
         await asyncio.sleep(300)
 
+async def check_tiktok_live():
+    was_live = False
+
+    await client.wait_until_ready()
+
+    while not client.is_closed():
+        try:
+            live_now = is_live(TIKTOK_USERNAME)
+
+            if live_now and not was_live:
+                was_live = True
+
+                channel = client.get_channel(UPLOAD_CHANNEL_ID)
+                if channel:
+                    await channel.send(
+                        f"<@&{UPLOAD_ROLE_ID}> 🔴 {TIKTOK_USERNAME} is LIVE!\n"
+                        f"https://www.tiktok.com/@{TIKTOK_USERNAME}/live"
+                    )
+
+            elif not live_now:
+                was_live = False
+
+        except Exception as e:
+            print("Live watcher error:", e)
+
+        await asyncio.sleep(60)
+
 def write_status():
     voice_channel = None
 
@@ -340,6 +367,7 @@ async def on_ready():
     client.loop.create_task(
         check_tiktok_uploads()
     )
+    client.loop.create_task(check_tiktok_live())
 
 
 @client.event
