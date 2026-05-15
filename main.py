@@ -281,7 +281,8 @@ def write_status():
             "guilds": len(client.guilds),
             "voice_connected":
                 len(client.voice_clients) > 0,
-            "voice_channel": voice_channel
+            "voice_channel": voice_channel,
+            "voice_text_channel": voice_channel
         }, f)
 
 async def background_loop():
