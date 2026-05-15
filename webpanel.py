@@ -213,13 +213,11 @@ def send_tts():
     if not text:
         return redirect(url_for("dashboard"))
 
-    try:
-        requests.post(
-            f"{BOT_API_URL}/send_tts",
-            json={"text": text}
-        )
-    except Exception as e:
-        print("TTS error:", e)
+    with open("bot_queue.json", "w", encoding="utf-8") as f:
+        json.dump({
+            "action": "tts",
+            "text": text
+        }, f)
 
     return redirect(url_for("dashboard"))
 
