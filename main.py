@@ -109,6 +109,9 @@ async def process_queue():
     ) as f:
         try:
             commands = json.load(f)
+
+            if isinstance(commands, dict):
+                commands = [commands]
         except:
             commands = []
 
