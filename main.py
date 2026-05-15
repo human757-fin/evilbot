@@ -141,7 +141,6 @@ async def process_queue():
         elif action == "stop_sound":
             if client.voice_clients:
                 vc = client.voice_clients[0]
-
                 if vc.is_playing():
                     vc.stop()
 
@@ -150,13 +149,13 @@ async def process_queue():
             guild_settings =     settings.get(str(GUILD_ID), {})
             channel_id = guild_settings.get("welcome_channel")
 
-          if channel_id:
-              channel = client.get_channel(channel_id)
-              if channel:
-                await channel.send(
-                cmd["text"],
-                tts=True
-            )
+            if channel_id:
+                channel = client.get_channel(channel_id)
+                if channel:
+                    await channel.send(
+                        cmd["text"],
+                        tts=True
+                    )
 
         elif action == "send_embed":
             channel = client.get_channel(
