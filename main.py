@@ -159,7 +159,7 @@ async def process_queue():
         elif action == "tts":
             settings = load_settings()
             guild_settings =     settings.get(str(GUILD_ID), {})
-            channel_id = guild_settings.get("welcome_channel")
+            channel_id = "1446953402096423195"
 
             if channel_id:
                 channel = client.get_channel(channel_id)
