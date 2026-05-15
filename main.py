@@ -6,6 +6,7 @@ from datetime import timedelta
 from dotenv import load_dotenv
 import asyncio
 import feedparser
+import requests
 
 from config import (
     SPAM_LIMIT,
@@ -63,6 +64,14 @@ def load_last_video():
 def save_last_video(video_url):
     with open(LAST_VIDEO_FILE, "w", encoding="utf-8") as f:
         f.write(video_url)
+
+def is_live(username):
+    url = f"https://www.tiktok.com/@{username}/live"
+    try:
+        response = requests.get(url, timeout=10)
+        return "LIVE" in response.text or "isLiveBroadcast" in response.text
+    except:
+        return False
 
 def write_channels():
     channels = []
@@ -380,7 +389,7 @@ async def on_ready():
     client.loop.create_task(
         check_tiktok_uploads()
     )
-     client.loop.create_task(check_tiktok_live())
+    client.loop.create_task(check_tiktok_live())
 
 
 @client.event
