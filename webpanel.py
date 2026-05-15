@@ -206,7 +206,6 @@ def route_leave_vc():
     )
 
 @app.route("/send_tts", methods=["POST"])
-@require_permission("voice")
 def send_tts():
     text = request.form.get("text")
 
