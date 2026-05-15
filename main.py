@@ -269,10 +269,10 @@ async def check_tiktok_live():
             if live_now and not was_live:
                 was_live = True
 
-                channel = client.get_channel(UPLOAD_CHANNEL_ID)
+                channel = client.get_channel(TIKTOK_CHANNEL_ID)
                 if channel:
                     await channel.send(
-                        f"<@&{UPLOAD_ROLE_ID}> 🔴 {TIKTOK_USERNAME} is LIVE!\n"
+                        f"<@&{UPLOAD_PING_ROLE_ID}> 🔴 {TIKTOK_USERNAME} is LIVE!\n"
                         f"https://www.tiktok.com/@{TIKTOK_USERNAME}/live"
                     )
 
