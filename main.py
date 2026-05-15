@@ -145,6 +145,19 @@ async def process_queue():
                 if vc.is_playing():
                     vc.stop()
 
+        elif action == "tts":
+            settings = load_settings()
+            guild_settings =     settings.get(str(GUILD_ID), {})
+            channel_id = guild_settings.get("welcome_channel")
+
+          if channel_id:
+              channel = client.get_channel(channel_id)
+              if channel:
+                await channel.send(
+                cmd["text"],
+                tts=True
+            )
+
         elif action == "send_embed":
             channel = client.get_channel(
                 int(cmd["channel_id"])
@@ -368,7 +381,7 @@ async def on_ready():
     client.loop.create_task(
         check_tiktok_uploads()
     )
-    client.loop.create_task(check_tiktok_live())
+     client.loop.create_task(check_tiktok_live())
 
 
 @client.event
