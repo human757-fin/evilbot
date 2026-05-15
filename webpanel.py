@@ -15,6 +15,7 @@ from dotenv import load_dotenv
 import pymysql
 import os
 import json
+import requests
 
 from permissions import (
     login_required,
@@ -203,6 +204,24 @@ def route_leave_vc():
     return redirect(
         url_for("dashboard")
     )
+
+@app.route("/send_tts", methods=["POST"])
+@require_permission("voice")
+def send_tts():
+    text = request.form.get("text")
+
+    if not text:
+        return redirect(url_for("dashboard"))
+
+    try:
+        requests.post(
+            f"{BOT_API_URL}/send_tts",
+            json={"text": text}
+        )
+    except Exception as e:
+        print("TTS error:", e)
+
+    return redirect(url_for("dashboard"))
 
 
 # ---------------- SOUNDS ----------------
