@@ -27,6 +27,11 @@ def push_command(data):
     ) as f:
         json.dump(commands, f, indent=4)
 
+def send_tts(text):
+    push_command({
+        "action": "send_tts",
+        "text": text
+    })
 
 def join_vc(channel_id):
     push_command({
