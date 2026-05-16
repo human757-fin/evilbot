@@ -384,10 +384,6 @@ async def on_ready():
     client.loop.create_task(
         background_loop()
     )
-    client.loop.create_task(
-        check_tiktok_uploads()
-    )
-    client.loop.create_task(check_tiktok_live())
 
 
 @client.event
