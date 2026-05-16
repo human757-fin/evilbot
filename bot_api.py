@@ -27,9 +27,9 @@ def push_command(data):
     ) as f:
         json.dump(commands, f, indent=4)
 
-def send_tts(text):
+def tts(text):
     push_command({
-        "action": "send_tts",
+        "action": "tts",
         "text": text
     })
 
