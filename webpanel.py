@@ -27,7 +27,8 @@ from bot_api import (
     play_sound,
     stop_sound,
     send_embed,
-    get_status
+    get_status,
+    tts
 )
 
 load_dotenv()
@@ -211,12 +212,8 @@ def send_tts():
 
     if not text:
         return redirect(url_for("dashboard"))
-
-    with open("bot_queue.json", "w", encoding="utf-8") as f:
-        json.dump({
-            "action": "tts",
-            "text": text
-        }, f)
+    tts(text)
+    flash("TTS Command sent.")
 
     return redirect(url_for("dashboard"))
 
