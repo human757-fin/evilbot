@@ -350,11 +350,6 @@ def excessive_caps(text):
 
 async def punish(member, reason, source_channel):
     try:
-        await member.timeout(
-            timedelta(minutes=TIMEOUT_MINUTES),
-            reason=reason
-        )
-
         log_channel = client.get_channel(LOG_CHANNEL_ID)
 
         embed = discord.Embed(
