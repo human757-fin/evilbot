@@ -9,6 +9,5 @@ BANNED_WORDS = [
     "nigger",
     "faggot",
     "kys",
-    "porn",
-    "discord.gg/"
+    "porn"
 ]
