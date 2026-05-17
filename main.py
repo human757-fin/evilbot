@@ -48,7 +48,10 @@ def load_giveaways():
         return []
 
     with open(GIVEAWAYS_FILE, "r") as f:
-        return json.load(f)
+        try:
+            return json.load(f)
+        except:
+            return []
 
 
 def save_giveaways(data):
@@ -72,72 +75,85 @@ async def check_giveaways():
 
     while not client.is_closed():
         giveaways = load_giveaways()
-        now = time.time()
-        remaining = []
+        now = int(discord.utils.utcnow().timestamp())
+        changed = False
 
         for giveaway in giveaways:
+            if giveaway["ended"]:
+                continue
+
             if now >= giveaway["end_time"]:
-                await end_giveaway(giveaway)
-            else:
-                remaining.append(giveaway)
+                giveaway["ended"] = True
+                changed = True
 
-        save_giveaways(remaining)
-        await asyncio.sleep(5)
+                channel = client.get_channel(
+                    giveaway["channel_id"]
+                )
+
+                if not channel:
+                    continue
+
+                winners_count = giveaway["winners"]
+                entries = giveaway["entries"]
+
+                if not entries:
+                    await channel.send(
+                        f"No entries for **{giveaway['prize']}**"
+                    )
+                    continue
+
+                selected = random.sample(
+                    entries,
+                    min(winners_count, len(entries))
+                )
+
+                mentions = ", ".join(
+                    f"<@{user_id}>"
+                    for user_id in selected
+                )
+
+                await channel.send(
+                    f"🎉 Giveaway ended!\n"
+                    f"Prize: **{giveaway['prize']}**\n"
+                    f"Winners: {mentions}"
+                )
+
+        if changed:
+            save_giveaways(giveaways)
+
+        await asyncio.sleep(10)
         
-async def end_giveaway(giveaway_data):
-    try:
-        channel = client.get_channel(
-            int(giveaway_data["channel_id"])
-        )
+async def create_giveaway(channel, duration_str, winners, prize):
+    seconds = parse_duration(duration_str)
+    end_time = int(discord.utils.utcnow().timestamp()) + seconds
 
-        if not channel:
-            return
+    embed = discord.Embed(
+        title="🎉 GIVEAWAY 🎉",
+        description=(
+            f"**Prize:** {prize}\n"
+            f"**Winners:** {winners}\n"
+            f"**Ends:** <t:{end_time}:R>\n\n"
+            f"Click button below to enter!"
+        ),
+        color=0x5865F2
+    )
 
-        message = await channel.fetch_message(
-            int(giveaway_data["message_id"])
-        )
+    message = await channel.send(
+        embed=embed,
+        view=GiveawayButton()
+    )
 
-        entrants = []
-
-        for reaction in message.reactions:
-            if str(reaction.emoji) == "🎉":
-                async for user in reaction.users():
-                    if not user.bot:
-                        entrants.append(user)
-
-        entrants = list(set(entrants))
-
-        if not entrants:
-            await channel.send(
-                f"❌ Giveaway ended: **{giveaway_data['prize']}**\nNo valid entries."
-            )
-            return
-
-        winners = random.sample(
-            entrants,
-            min(
-                giveaway_data["winners"],
-                len(entrants)
-            )
-        )
-
-        winner_mentions = ", ".join(
-            winner.mention for winner in winners
-        )
-
-        embed = discord.Embed(
-            title="🎊 Giveaway Ended",
-            description=(
-                f"**Prize:** {giveaway_data['prize']}**\n"
-                f"Winner(s): {winner_mentions}"
-            ),
-            color=0x57F287
-        )
-
-        await channel.send(embed=embed)
-
-    except Exception as e:
-        print("Giveaway error:", e)
+    giveaways = load_giveaways()
+    giveaways.append({
+        "message_id": message.id,
+        "channel_id": channel.id,
+        "prize": prize,
+        "winners": winners,
+        "end_time": end_time,
+        "entries": [],
+        "ended": False
+    })
+    save_giveaways(giveaways)
 
 def parse_duration(duration: str) -> int:
     """
@@ -239,7 +255,10 @@ async def process_queue():
             )
 
             if channel:
-                await channel.connect()
+                if client.voice_clients:
+                    await client.voice_clients[0].move_to(channel)
+                else:
+                    await channel.connect()
 
         elif action == "leave_vc":
             for vc in client.voice_clients:
@@ -272,7 +291,7 @@ async def process_queue():
         elif action == "tts":
             settings = load_settings()
             guild_settings =     settings.get(str(GUILD_ID), {})
-            channel_id = "1446953402096423195"
+            channel_id = 1446953402096423195
 
             if channel_id:
                 channel = client.get_channel(channel_id)
@@ -281,6 +300,17 @@ async def process_queue():
                         cmd["text"],
                         tts=True
                     )
+                    
+        elif action == "create_giveaway":
+            channel = client.get_channel(int(cmd["channel_id"]))
+
+            if channel:
+                await create_giveaway(
+                    channel,
+                    cmd["duration"],
+                    cmd["winners"],
+                    cmd["prize"]
+                )
 
         elif action == "send_embed":
             channel = client.get_channel(
@@ -378,6 +408,41 @@ class LinkButtons(discord.ui.View):
                     discord.ui.Button(label=label, url=url)
                 )
 
+class GiveawayButton(discord.ui.View):
+    def __init__(self):
+        super().__init__(timeout=None)
+
+    @discord.ui.button(
+        label="🎉 Enter Giveaway",
+        style=discord.ButtonStyle.green,
+        custom_id="giveaway_enter"
+    )
+    async def enter(
+        self,
+        interaction: discord.Interaction,
+        button: discord.ui.Button
+    ):
+        giveaways = load_giveaways()
+
+        for giveaway in giveaways:
+            if giveaway["message_id"] == interaction.message.id:
+                user_id = interaction.user.id
+
+                if user_id in giveaway["entries"]:
+                    await interaction.response.send_message(
+                        "You already entered.",
+                        ephemeral=True
+                    )
+                    return
+
+                giveaway["entries"].append(user_id)
+                save_giveaways(giveaways)
+
+                await interaction.response.send_message(
+                    "Entered giveaway ✅",
+                    ephemeral=True
+                )
+                return
 
 def is_staff(member):
     return (
@@ -429,8 +494,9 @@ async def on_ready():
     write_status()
     write_channels()
     client.loop.create_task(background_loop())
-    client.loop.create_task(check_giveaways())
     client.loop.create_task(update_member_count())
+    client.loop.create_task(check_giveaways())
+    client.add_view(GiveawayButton())
 
 
 @client.event
@@ -576,7 +642,7 @@ If something feels like it might break the rules, it probably does.
             return
 
         filename = parts[1]
-        filepath = f"/home/container/bot/sounds/{filename}"
+        filepath = f"/home/container/sounds/{filename}"
 
         if not os.path.isfile(filepath):
             await message.channel.send(
@@ -720,48 +786,17 @@ async def giveaway(
     duration: str,
     winners: int = 1
 ):
-    seconds = parse_duration(duration)
-
-    if seconds <= 0:
-        await interaction.response.send_message(
-            "Invalid duration. Example: 10min, 3h, 1d",
-            ephemeral=True
-        )
-        return
-
-    embed = discord.Embed(
-        title="🎉 Giveaway",
-        description=(
-            f"**Prize:** {prize}\n"
-            f"**Winners:** {winners}\n"
-            f"**Duration:** {duration}\n\n"
-            "React with 🎉 to enter!"
-        ),
-        color=0x5865F2
+    await create_giveaway(
+        interaction.channel,
+        duration,
+        winners,
+        prize
     )
 
     await interaction.response.send_message(
         "Giveaway started ✅",
         ephemeral=True
     )
-
-    giveaway_message = await interaction.channel.send(
-        embed=embed
-    )
-
-    await giveaway_message.add_reaction("🎉")
-
-    giveaways = load_giveaways()
-
-    giveaways.append({
-        "message_id": giveaway_message.id,
-        "channel_id": interaction.channel.id,
-        "prize": prize,
-        "winners": winners,
-        "end_time": time.time() + seconds
-    })
-
-    save_giveaways(giveaways)
     
 
 @tree.command(name="setwelcome", description="Set welcome", guild=guild)
