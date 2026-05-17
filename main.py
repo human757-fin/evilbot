@@ -175,7 +175,7 @@ async def update_member_count():
                 guild = client.guilds[0]  # first guild bot is in
                 member_count = guild.member_count
 
-                new_name = f"Members: {member_count}"
+                new_name = f"👥・{member_count}"
 
                 if channel.name != new_name:
                     await channel.edit(name=new_name)
