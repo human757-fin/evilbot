@@ -184,7 +184,7 @@ async def update_member_count():
         except Exception as e:
             print("Member count updater error:", e)
 
-        await asyncio.sleep(60)  # updates every 5 mins
+        await asyncio.sleep(60)
 
 def write_channels():
     channels = []

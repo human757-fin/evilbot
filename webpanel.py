@@ -321,6 +321,31 @@ def embed_page():
     )
 
 
+@app.route("/create_giveaway", methods=["POST"])
+@admin_required
+def create_giveaway():
+    queue_file = "bot_queue.json"
+
+    with open(queue_file, "r", encoding="utf-8") as f:
+        try:
+            queue = json.load(f)
+        except:
+            queue = []
+
+    queue.append({
+        "action": "create_giveaway",
+        "channel_id": request.form["channel_id"],
+        "prize": request.form["prize"],
+        "duration": request.form["duration"],
+        "winners": int(request.form["winners"])
+    })
+
+    with open(queue_file, "w", encoding="utf-8") as f:
+        json.dump(queue, f, indent=4)
+
+    flash("Giveaway queued successfully", "success")
+    return redirect(url_for("dashboard"))
+
 # ---------------- USER ADMIN ----------------
 @app.route(
     "/users",

@@ -24,6 +24,34 @@
     </p>
 </div>
 
+<div class="card">
+    <h2>Create Giveaway</h2>
+
+    <form method="POST" action="/create_giveaway">
+        <label>Channel</label>
+        <select name="channel_id" required>
+            {% for channel in channels %}
+                {% if channel.name.startswith('#') %}
+                    <option value="{{ channel.id }}">
+                        {{ channel.name }}
+                    </option>
+                {% endif %}
+            {% endfor %}
+        </select>
+
+        <label>Prize</label>
+        <input type="text" name="prize" placeholder="Nitro Classic" required>
+
+        <label>Duration</label>
+        <input type="text" name="duration" placeholder="10m / 2h / 1d" required>
+
+        <label>Winners</label>
+        <input type="number" name="winners" value="1" min="1" required>
+
+        <button type="submit">🎉 Start Giveaway</button>
+    </form>
+</div>
+
 <form method="post" action="/join_vc">
     <select name="channel_id">
         {% for channel in channels %}
@@ -46,4 +74,31 @@
     <textarea name="text" placeholder="Text to speak" rows="4"></textarea>
     <button type="submit">Send TTS</button>
 </form>
+<div class="card">
+    <h2>Create Giveaway</h2>
+
+    <form method="POST" action="/create_giveaway">
+        <label>Channel</label>
+        <select name="channel_id" required>
+            {% for channel in channels %}
+                {% if channel.name.startswith('#') %}
+                    <option value="{{ channel.id }}">
+                        {{ channel.name }}
+                    </option>
+                {% endif %}
+            {% endfor %}
+        </select>
+
+        <label>Prize</label>
+        <input type="text" name="prize" placeholder="Nitro Classic" required>
+
+        <label>Duration</label>
+        <input type="text" name="duration" placeholder="10m / 2h / 1d" required>
+
+        <label>Winners</label>
+        <input type="number" name="winners" value="1" min="1" required>
+
+        <button type="submit">🎉 Start Giveaway</button>
+    </form>
+</div>
 {% endblock %}
