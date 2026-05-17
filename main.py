@@ -24,6 +24,8 @@ BOT_TOKEN = os.getenv("BOT_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))
 LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID"))
 
+MEMBER_COUNT_CHANNEL_ID = 1505520927750881281
+
 LAST_VIDEO_FILE = "last_tiktok.txt"
 
 intents = discord.Intents.default()
@@ -161,6 +163,28 @@ def parse_duration(duration: str) -> int:
         total += int(amount) * units[unit]
 
     return total
+
+async def update_member_count():
+    await client.wait_until_ready()
+
+    while not client.is_closed():
+        try:
+            channel = client.get_channel(MEMBER_COUNT_CHANNEL_ID)
+
+            if channel and client.guilds:
+                guild = client.guilds[0]  # first guild bot is in
+                member_count = guild.member_count
+
+                new_name = f"Members: {member_count}"
+
+                if channel.name != new_name:
+                    await channel.edit(name=new_name)
+                    print(f"Updated member count to {member_count}")
+
+        except Exception as e:
+            print("Member count updater error:", e)
+
+        await asyncio.sleep(300)  # updates every 5 mins
 
 def write_channels():
     channels = []
@@ -404,10 +428,9 @@ async def on_ready():
     print(f"Logged in as {client.user}")
     write_status()
     write_channels()
-    client.loop.create_task(
-        background_loop()
-    )
+    client.loop.create_task(background_loop())
     client.loop.create_task(check_giveaways())
+    client.loop.create_task(update_member_count())
 
 
 @client.event
