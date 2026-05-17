@@ -2,19 +2,20 @@ import discord
 from discord import app_commands
 import json
 import os
+import time
 from datetime import timedelta
 from dotenv import load_dotenv
 import asyncio
 import feedparser
 import requests
+import random
+import re
 
 from config import (
     SPAM_LIMIT,
     SPAM_SECONDS,
     MAX_MENTIONS,
-    TIMEOUT_MINUTES,
-    DEFAULT_WELCOME_COLOR,
-    BANNED_WORDS
+    DEFAULT_WELCOME_COLOR,  
 )
 
 load_dotenv()
@@ -22,10 +23,6 @@ load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 GUILD_ID = int(os.getenv("GUILD_ID"))
 LOG_CHANNEL_ID = int(os.getenv("LOG_CHANNEL_ID"))
-
-TIKTOK_USERNAME = os.getenv("TIKTOK_USERNAME")
-TIKTOK_CHANNEL_ID = int(os.getenv("TIKTOK_CHANNEL_ID"))
-UPLOAD_PING_ROLE_ID = int(os.getenv("UPLOAD_PING_ROLE_ID"))
 
 LAST_VIDEO_FILE = "last_tiktok.txt"
 
@@ -41,6 +38,20 @@ guild = discord.Object(id=GUILD_ID)
 SETTINGS_FILE = "settings.json"
 MESSAGE_CACHE = {}
 
+GIVEAWAYS_FILE = "giveaways.json"
+
+
+def load_giveaways():
+    if not os.path.exists(GIVEAWAYS_FILE):
+        return []
+
+    with open(GIVEAWAYS_FILE, "r") as f:
+        return json.load(f)
+
+
+def save_giveaways(data):
+    with open(GIVEAWAYS_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 def load_settings():
     if not os.path.exists(SETTINGS_FILE):
@@ -54,24 +65,102 @@ def save_settings(data):
     with open(SETTINGS_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
-def load_last_video():
-    if os.path.exists(LAST_VIDEO_FILE):
-        with open(LAST_VIDEO_FILE, "r", encoding="utf-8") as f:
-            return f.read().strip()
-    return None
+async def check_giveaways():
+    await client.wait_until_ready()
 
+    while not client.is_closed():
+        giveaways = load_giveaways()
+        now = time.time()
+        remaining = []
 
-def save_last_video(video_url):
-    with open(LAST_VIDEO_FILE, "w", encoding="utf-8") as f:
-        f.write(video_url)
+        for giveaway in giveaways:
+            if now >= giveaway["end_time"]:
+                await end_giveaway(giveaway)
+            else:
+                remaining.append(giveaway)
 
-def is_live(username):
-    url = f"https://www.tiktok.com/@{username}/live"
+        save_giveaways(remaining)
+        await asyncio.sleep(5)
+        
+async def end_giveaway(giveaway_data):
     try:
-        response = requests.get(url, timeout=10)
-        return "LIVE" in response.text or "isLiveBroadcast" in response.text
-    except:
-        return False
+        channel = client.get_channel(
+            int(giveaway_data["channel_id"])
+        )
+
+        if not channel:
+            return
+
+        message = await channel.fetch_message(
+            int(giveaway_data["message_id"])
+        )
+
+        entrants = []
+
+        for reaction in message.reactions:
+            if str(reaction.emoji) == "🎉":
+                async for user in reaction.users():
+                    if not user.bot:
+                        entrants.append(user)
+
+        entrants = list(set(entrants))
+
+        if not entrants:
+            await channel.send(
+                f"❌ Giveaway ended: **{giveaway_data['prize']}**\nNo valid entries."
+            )
+            return
+
+        winners = random.sample(
+            entrants,
+            min(
+                giveaway_data["winners"],
+                len(entrants)
+            )
+        )
+
+        winner_mentions = ", ".join(
+            winner.mention for winner in winners
+        )
+
+        embed = discord.Embed(
+            title="🎊 Giveaway Ended",
+            description=(
+                f"**Prize:** {giveaway_data['prize']}**\n"
+                f"Winner(s): {winner_mentions}"
+            ),
+            color=0x57F287
+        )
+
+        await channel.send(embed=embed)
+
+    except Exception as e:
+        print("Giveaway error:", e)
+
+def parse_duration(duration: str) -> int:
+    """
+    Converts:
+    10min -> seconds
+    3h -> seconds
+    1d -> seconds
+    2h30min -> seconds
+    """
+    total = 0
+
+    matches = re.findall(r"(\d+)(s|min|m|h|d)", duration.lower())
+
+    units = {
+        "s": 1,
+        "m": 60,
+        "min": 60,
+        "h": 3600,
+        "d": 86400
+    }
+
+    for amount, unit in matches:
+        total += int(amount) * units[unit]
+
+    return total
 
 def write_channels():
     channels = []
@@ -221,72 +310,6 @@ async def process_queue():
                 view=view
             )
 
-async def check_tiktok_uploads():
-    await client.wait_until_ready()
-
-    while not client.is_closed():
-        try:
-            url = f"https://rsshub.app/tiktok/user/{TIKTOK_USERNAME}"
-            feed = feedparser.parse(url)
-
-            if feed.entries:
-                latest = feed.entries[0]
-                video_url = latest.link
-
-                last_video = load_last_video()
-
-                # First run: save without posting
-                if last_video is None:
-                    save_last_video(video_url)
-
-                elif video_url != last_video:
-                    save_last_video(video_url)
-
-                    channel = client.get_channel(TIKTOK_CHANNEL_ID)
-
-                    if channel:
-                        role_ping = f"<@&{UPLOAD_PING_ROLE_ID}>"
-
-                        embed = discord.Embed(
-                            title="New TikTok Upload",
-                            description=f"{role_ping}\n{video_url}",
-                            color=0xFE2C55
-                        )
-
-                        await channel.send(embed=embed)
-
-        except Exception as e:
-            print("TikTok watcher error:", e)
-
-        await asyncio.sleep(300)
-
-async def check_tiktok_live():
-    was_live = False
-
-    await client.wait_until_ready()
-
-    while not client.is_closed():
-        try:
-            live_now = is_live(TIKTOK_USERNAME)
-
-            if live_now and not was_live:
-                was_live = True
-
-                channel = client.get_channel(TIKTOK_CHANNEL_ID)
-                if channel:
-                    await channel.send(
-                        f"<@&{UPLOAD_PING_ROLE_ID}> 🔴 {TIKTOK_USERNAME} is LIVE!\n"
-                        f"https://www.tiktok.com/@{TIKTOK_USERNAME}/live"
-                    )
-
-            elif not live_now:
-                was_live = False
-
-        except Exception as e:
-            print("Live watcher error:", e)
-
-        await asyncio.sleep(60)
-
 def write_status():
     voice_channel = None
 
@@ -384,6 +407,7 @@ async def on_ready():
     client.loop.create_task(
         background_loop()
     )
+    client.loop.create_task(check_giveaways())
 
 
 @client.event
@@ -592,14 +616,14 @@ If something feels like it might break the rules, it probably does.
         )
         return
 
-    for word in BANNED_WORDS:
-        if word in content_lower:
-            await punish(
-                message.author,
-                f"Blocked content: {word}",
-                message.channel
-            )
-            return
+    # for word in BANNED_WORDS:
+    #     if word in content_lower:
+    #         await punish(
+    #             message.author,
+    #             f"Blocked content: {word}",
+    #             message.channel
+    #         )
+    #         return
 
 
 @client.event
@@ -658,6 +682,64 @@ async def on_member_join(member):
 async def slash_test(interaction: discord.Interaction):
     await interaction.response.send_message("Working ✅")
 
+
+@tree.command(
+    name="giveaway",
+    description="Start a giveaway",
+    guild=guild
+)
+@app_commands.checks.has_permissions(
+    administrator=True
+)
+async def giveaway(
+    interaction: discord.Interaction,
+    prize: str,
+    duration: str,
+    winners: int = 1
+):
+    seconds = parse_duration(duration)
+
+    if seconds <= 0:
+        await interaction.response.send_message(
+            "Invalid duration. Example: 10min, 3h, 1d",
+            ephemeral=True
+        )
+        return
+
+    embed = discord.Embed(
+        title="🎉 Giveaway",
+        description=(
+            f"**Prize:** {prize}\n"
+            f"**Winners:** {winners}\n"
+            f"**Duration:** {duration}\n\n"
+            "React with 🎉 to enter!"
+        ),
+        color=0x5865F2
+    )
+
+    await interaction.response.send_message(
+        "Giveaway started ✅",
+        ephemeral=True
+    )
+
+    giveaway_message = await interaction.channel.send(
+        embed=embed
+    )
+
+    await giveaway_message.add_reaction("🎉")
+
+    giveaways = load_giveaways()
+
+    giveaways.append({
+        "message_id": giveaway_message.id,
+        "channel_id": interaction.channel.id,
+        "prize": prize,
+        "winners": winners,
+        "end_time": time.time() + seconds
+    })
+
+    save_giveaways(giveaways)
+    
 
 @tree.command(name="setwelcome", description="Set welcome", guild=guild)
 @app_commands.checks.has_permissions(administrator=True)

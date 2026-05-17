@@ -4,10 +4,3 @@ MAX_MENTIONS = 5
 TIMEOUT_MINUTES = 5
 
 DEFAULT_WELCOME_COLOR = "FF0000"
-
-BANNED_WORDS = [
-    "nigger",
-    "faggot",
-    "kys",
-    "porn"
-]
