@@ -799,6 +799,87 @@ async def giveaway(
     )
     
 
+@tree.command(
+    name="gastatus",
+    description="Check giveaway status",
+    guild=guild
+)
+@app_commands.checks.has_permissions(
+    administrator=True
+)
+async def gastatus(
+    interaction: discord.Interaction,
+    message_id: str
+):
+    giveaways = load_giveaways()
+
+    try:
+        message_id = int(message_id)
+    except ValueError:
+        await interaction.response.send_message(
+            "Invalid message ID.",
+            ephemeral=True
+        )
+        return
+
+    giveaway = None
+
+    for ga in giveaways:
+        if ga["message_id"] == message_id:
+            giveaway = ga
+            break
+
+    if not giveaway:
+        await interaction.response.send_message(
+            "Giveaway not found.",
+            ephemeral=True
+        )
+        return
+
+    entries = len(giveaway["entries"])
+    ended = "Yes" if giveaway["ended"] else "No"
+
+    embed = discord.Embed(
+        title="🎉 Giveaway Status",
+        color=0x5865F2
+    )
+
+    embed.add_field(
+        name="Prize",
+        value=giveaway["prize"],
+        inline=False
+    )
+
+    embed.add_field(
+        name="Entries",
+        value=str(entries),
+        inline=True
+    )
+
+    embed.add_field(
+        name="Winners",
+        value=str(giveaway["winners"]),
+        inline=True
+    )
+
+    embed.add_field(
+        name="Ended",
+        value=ended,
+        inline=True
+    )
+
+    embed.add_field(
+        name="Ends",
+        value=f"<t:{giveaway['end_time']}:R>",
+        inline=False
+    )
+
+    await interaction.response.send_message(
+        embed=embed,
+        ephemeral=True
+    )
+
+
 @tree.command(name="setwelcome", description="Set welcome", guild=guild)
 @app_commands.checks.has_permissions(administrator=True)
 async def set_welcome(
