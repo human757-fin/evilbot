@@ -879,6 +879,70 @@ async def gastatus(
         ephemeral=True
     )
 
+@tree.command(
+    name="reroll",
+    description="Reroll a giveaway winner",
+    guild=guild
+)
+@app_commands.checks.has_permissions(
+    administrator=True
+)
+async def reroll(
+    interaction: discord.Interaction,
+    message_id: str
+):
+    giveaways = load_giveaways()
+
+    try:
+        message_id = int(message_id)
+    except ValueError:
+        await interaction.response.send_message(
+            "Invalid message ID.",
+            ephemeral=True
+        )
+        return
+
+    giveaway = None
+
+    for ga in giveaways:
+        if ga["message_id"] == message_id:
+            giveaway = ga
+            break
+
+    if not giveaway:
+        await interaction.response.send_message(
+            "Giveaway not found.",
+            ephemeral=True
+        )
+        return
+
+    entries = giveaway["entries"]
+
+    if not entries:
+        await interaction.response.send_message(
+            "No entries in this giveaway.",
+            ephemeral=True
+        )
+        return
+
+    winners_count = giveaway["winners"]
+
+    winners = random.sample(
+        entries,
+        min(winners_count, len(entries))
+    )
+
+    mentions = ", ".join(
+        f"<@{user_id}>"
+        for user_id in winners
+    )
+
+    await interaction.response.send_message(
+        f"🎉 Giveaway rerolled!\n"
+        f"**Prize:** {giveaway['prize']}\n"
+        f"New winner(s): {mentions}"
+    )
+
 
 @tree.command(name="setwelcome", description="Set welcome", guild=guild)
 @app_commands.checks.has_permissions(administrator=True)
